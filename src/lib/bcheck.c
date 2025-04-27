@@ -734,30 +734,30 @@ static size_t get_region_size(void *p)
 
 static void install_malloc_hooks(void)
 {
-#ifdef CONFIG_TCC_MALLOC_HOOKS
-    saved_malloc_hook = __malloc_hook;
-    saved_free_hook = __free_hook;
-    saved_realloc_hook = __realloc_hook;
-    saved_memalign_hook = __memalign_hook;
-    __malloc_hook = __bound_malloc;
-    __free_hook = __bound_free;
-    __realloc_hook = __bound_realloc;
-    __memalign_hook = __bound_memalign;
+// #ifdef CONFIG_TCC_MALLOC_HOOKS
+//     saved_malloc_hook = __malloc_hook;
+//     saved_free_hook = __free_hook;
+//     saved_realloc_hook = __realloc_hook;
+//     saved_memalign_hook = __memalign_hook;
+//     __malloc_hook = __bound_malloc;
+//     __free_hook = __bound_free;
+//     __realloc_hook = __bound_realloc;
+//     __memalign_hook = __bound_memalign;
 
-    barrier();
-#endif
+//     barrier();
+// #endif
 }
 
 static void restore_malloc_hooks(void)
 {
-#ifdef CONFIG_TCC_MALLOC_HOOKS
-    __malloc_hook = saved_malloc_hook;
-    __free_hook = saved_free_hook;
-    __realloc_hook = saved_realloc_hook;
-    __memalign_hook = saved_memalign_hook;
+// #ifdef CONFIG_TCC_MALLOC_HOOKS
+//     __malloc_hook = saved_malloc_hook;
+//     __free_hook = saved_free_hook;
+//     __realloc_hook = saved_realloc_hook;
+//     __memalign_hook = saved_memalign_hook;
 
-    barrier();
-#endif
+//     barrier();
+// #endif
 }
 
 static void *libc_malloc(size_t size)

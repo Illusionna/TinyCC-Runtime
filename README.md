@@ -9,6 +9,7 @@
 ```bash
 tcc main.c -o main.exe      // 直接生成二进制可执行文件
 tcc -run main.c             // 以脚本形式运行
+tcc -c main.c               // 生成 main.o 目标链接文件
 
 tcc -E main.c -o main.i     // 预处理
 gcc -S main.i -o main.s     // 编译（tcc 不支持，使用 gcc）

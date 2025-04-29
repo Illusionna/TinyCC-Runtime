@@ -25,6 +25,18 @@ gcc main.o -o main.exe      // 链接
 (√) _CRTIMP int *__cdecl _errno(void);          // 不需要 extern 关键词修饰.
 ```
 
+- 2025-04-29: `win32/include/math.h` 头文件
+```c
+/** (x)
+ * tcc 不支持汇编 t 约束.
+float res;
+__asm__ ("fabs;" : "=t" (res) : "0" (x));
+return res;
+**/
+(√) return x < 0 ? -x : x;    // 直接用更加兼容的表达式.
+```
+
+
 ## 新特性
 
 - 2025-04-28: 多线程 `thread.h` 头文件.

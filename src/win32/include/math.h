@@ -213,9 +213,11 @@ extern "C" {
 #if !defined (__ia64__)
   __CRT_INLINE float __cdecl fabsf (float x)
   {
-    float res;
-    __asm__ ("fabs;" : "=t" (res) : "0" (x));
-    return res;
+  //  float res;
+  //  __asm__ ("fabs;" : "=t" (res) : "0" (x));
+  //  return res;
+
+	return x < 0 ? -x : x;
   }
 
   __CRT_INLINE float __cdecl ldexpf (float x, int expn) { return (float) ldexp (x, expn); }

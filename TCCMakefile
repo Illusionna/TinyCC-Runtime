@@ -1,0 +1,28 @@
+.PHONY: clean
+
+CC = tcc
+TARGET = main
+
+SRC = $(call rwildcard, ./, %.c)
+rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
+
+ifeq ($(OS), Windows_NT)
+	REMOVE = del
+	TARGET := main.exe
+	SRC := $(subst /,\,$(SRC))
+else
+	REMOVE = rm
+	TARGET := main.out
+	SRC := $(subst \,/,$(SRC))
+endif
+
+OBJ = $(SRC:.c=.o)
+
+$(TARGET): $(OBJ)
+	$(CC) $(OBJ) -o $(TARGET)
+
+%.o: %.c
+	$(CC) -c $< -o $@
+
+clean:
+	$(REMOVE) $(OBJ) $(TARGET)

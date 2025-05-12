@@ -1,0 +1,39 @@
+.PHONY: clean
+
+CC = gcc
+TARGET = main
+
+SRC = $(call rwildcard, ./, %.c)
+rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
+
+ifeq ($(OS), Windows_NT)
+	REMOVE = del
+	TARGET := main.exe
+	SRC := $(subst /,\,$(SRC))
+else
+	REMOVE = rm
+	TARGET := main.out
+	SRC := $(subst \,/,$(SRC))
+endif
+
+preprocessing = $(SRC:.c=.i)
+compilation = $(preprocessing:.i=.s)
+assembly = $(compilation:.s=.o)
+
+$(TARGET): $(assembly)
+	$(CC) $(assembly) -o $(TARGET)
+
+$(assembly): %.o: %.s
+	$(CC) -c $< -o $@
+
+$(compilation): %.s: %.i
+	$(CC) -S $< -o $@
+
+$(preprocessing): %.i: %.c
+	$(CC) -E $< -o $@
+
+clean:
+	$(REMOVE) $(preprocessing)
+	$(REMOVE) $(compilation)
+	$(REMOVE) $(assembly)
+	$(REMOVE) $(TARGET)

@@ -65,3 +65,25 @@ int main(int argc, char *argv[], char *env[]) {
     return 0;
 }
 ```
+
+- 2025-06-28: 哈希表字典 `hashmap.h` 头文件.
+```c
+#include "hashmap.h"
+
+int main(int argc, char *argv[], char *env[]) {
+    HashMap *dict = hashmap_create();
+    hashmap_put(dict, "1", "com");
+    hashmap_put(dict, "11", "org");
+    hashmap_put(dict, "111", "xyz");
+    hashmap_put(dict, "2", "net");
+    hashmap_put(dict, "33", "cn");
+    hashmap_put(dict, "3", "edu");
+    hashmap_print(dict);
+    printf("%s\n", hashmap_get(dict, "111") ? hashmap_get(dict, "111") : "(null)");
+    printf("%s\n", hashmap_get(dict, "1314") ? hashmap_get(dict, "111") : "(null)");
+    printf("delete %s\n", hashmap_remove(dict, "11") == 0 ? "success" : "failed");
+    hashmap_view(dict);
+    hashmap_destroy(dict);
+    return 0;
+}
+```

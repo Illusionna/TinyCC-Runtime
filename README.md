@@ -39,6 +39,103 @@ return res;
 
 ## 新特性
 
+- 2025-11-22: 多线程 `log.h` 头文件.
+```c
+#include <stdio.h>
+#include "log.h"
+
+int main(int argc, char *argv[], char *env[]) {
+    log_trace("NB.");
+
+    log_setting(0);
+    FILE *f = fopen("log.log", "w");
+    log_config_write(f);
+
+    log_debug("Write to the file.");
+    log_info("Oops?");
+
+    fclose(f);
+    return 0;
+}
+```
+
+- 2025-11-22: 多线程 `os.h` 头文件.
+```c
+#include <stdlib.h>
+#include "os.h"
+
+int main(int argc, char *argv[], char *env[]) {
+    os_getpid();
+    os_access("demo.txt");
+    char *buffer = os_readfile("demo.txt", 0, -1);
+    free(buffer);
+    return 0;
+}
+```
+
+- 2025-11-22: 多线程 `socket.h` 头文件.
+```c
+#include <stdio.h>
+#include "socket.h"
+
+int main(int argc, char *argv[], char *env[]) {
+    if (socket_init()) {
+        return 1;
+    }
+
+    Socket S = socket_create(AF_INET, SOCK_STREAM, 0);
+    if (S == SOCKET_INVALID) {
+        socket_destroy();
+        return 1;
+    }
+
+    if (socket_setopt(S, SOL_SOCKET, SO_REUSEADDR) == SOCKET_INVALID) {
+        socket_close(S);
+        socket_destroy();
+        return 1;
+    }
+
+    struct sockaddr_in server;
+    memset(&server, 0, sizeof(server));
+    socket_config(&server, AF_INET, "127.0.0.1", 8080);
+
+    if (socket_bind(S, &server, sizeof(server)) == SOCKET_INVALID) {
+        socket_close(S);
+        socket_destroy();
+        return 1;
+    }
+
+    if (socket_listen(S, 16) == SOCKET_INVALID) {
+        socket_close(S);
+        socket_destroy();
+        return 1;
+    }
+
+    while (1) {
+        struct sockaddr_in client;
+        int client_length = sizeof(client);
+
+        Socket c = socket_accept(S, &client, &client_length);
+
+        if (c == SOCKET_INVALID) continue;
+
+        printf("client (%s:%d)", inet_ntoa(client.sin_addr), ntohs(client.sin_port));
+
+        int n = socket_recv(c, buffer, sizeof(buffer) - 1, 0);
+        if (n <= 0) {
+            socket_close(c);
+            return 1;
+        }
+        buffer[n] = '\0';
+
+        socket_send(c, "Hello world!", 12, 0);
+        socket_close(c);
+    }
+
+    return 0;
+}
+```
+
 - 2025-04-28: 多线程 `thread.h` 头文件.
 ```c
 // >>> tcc test-thread.c

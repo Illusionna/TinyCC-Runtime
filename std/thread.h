@@ -132,14 +132,43 @@ int mutex_trylock(Mutex *mutex);
 int mutex_unlock(Mutex *mutex);
 
 
+/**
+ * @brief Initialize the condition variable.
+ * @param condition The pointer of condition variable object.
+ * @return `0` for success, `1` for failure.
+**/
 int condition_init(ThreadCondition *condition);
 
+
+/**
+ * @brief Destroy the condition variable.
+ * @param condition The pointer of condition variable object.
+**/
 void condition_destroy(ThreadCondition *condition);
 
+
+/**
+ * @brief Wait for the condition variable.
+ * @param condition The pointer of condition variable object.
+ * @param mutex The pointer of the associated mutex (should be locked before calling).
+ * @return `0` for success, `1` for failure.
+**/
 int condition_wait(ThreadCondition *condition, Mutex *mutex);
 
+
+/**
+ * @brief Signal the condition variable to wake up one waiting thread.
+ * @param condition The pointer of condition variable object.
+ * @return `0` for success, `1` for failure.
+**/
 int condition_signal(ThreadCondition *condition);
 
+
+/**
+ * @brief Broadcast the condition variable to wake up all waiting threads.
+ * @param condition The pointer of condition variable object.
+ * @return `0` for success, `1` for failure.
+**/
 int condition_broadcast(ThreadCondition *condition);
 
 

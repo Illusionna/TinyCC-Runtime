@@ -67,9 +67,9 @@ int thread_join(Thread *thread, int *result) {
 
 int thread_detach(Thread *thread) {
     #if defined(__OS_UNIX__)
-        return (pthread_detach(*thread) == 0) ? 0 : 1;
+        return pthread_detach(*thread) == 0 ? 0 : 1;
     #elif defined(__OS_WINDOWS__)
-        return (CloseHandle(*thread) != 0) ? 0 : 1;
+        return CloseHandle(*thread) != 0 ? 0 : 1;
     #endif
 }
 
@@ -90,7 +90,7 @@ int mutex_create(Mutex *mutex, int type) {
         if (type & 8) pthread_mutexattr_settype(&t, PTHREAD_MUTEX_RECURSIVE);
         int res = pthread_mutex_init(mutex, &t);
         pthread_mutexattr_destroy(&t);
-        return (res == 0) ? 0 : 1;
+        return res == 0 ? 0 : 1;
     #elif defined(__OS_WINDOWS__)
         mutex->status = 0;
         mutex->recursive = type & 8;
@@ -111,7 +111,7 @@ void mutex_destroy(Mutex *mutex) {
 
 int mutex_lock(Mutex *mutex) {
     #if defined(__OS_UNIX__)
-        return (pthread_mutex_lock(mutex) == 0) ? 0 : 1;
+        return pthread_mutex_lock(mutex) == 0 ? 0 : 1;
     #elif defined(__OS_WINDOWS__)
         EnterCriticalSection(&mutex->cs);
         if (!mutex->recursive) {
@@ -125,7 +125,7 @@ int mutex_lock(Mutex *mutex) {
 
 int mutex_trylock(Mutex *mutex) {
     #if defined(__OS_UNIX__)
-        return (pthread_mutex_trylock(mutex) == 0) ? 0 : 1;
+        return pthread_mutex_trylock(mutex) == 0 ? 0 : 1;
     #elif defined(__OS_WINDOWS__)
         int res = TryEnterCriticalSection(&mutex->cs) ? 0 : 1;
         if ((!mutex->recursive) && (res == 1) && mutex->status) {
@@ -139,10 +139,78 @@ int mutex_trylock(Mutex *mutex) {
 
 int mutex_unlock(Mutex *mutex) {
     #if defined(__OS_UNIX__)
-        return (pthread_mutex_unlock(mutex) == 0) ? 0 : 1;
+        return pthread_mutex_unlock(mutex) == 0 ? 0 : 1;
     #elif defined(__OS_WINDOWS__)
         mutex->status = 0;
         LeaveCriticalSection(&mutex->cs);
+        return 0;
+    #endif
+}
+
+
+int condition_init(ThreadCondition *condition) {
+    #if defined(__OS_UNIX__)
+        return pthread_cond_init(condition, NULL) == 0 ? 0 : 1;
+    #elif defined(__OS_WINDOWS__)
+        condition->waiter_count = 0;
+        InitializeCriticalSection(&condition->cs);
+        condition->events[0] = CreateEvent(NULL, FALSE, FALSE, NULL);
+        if (condition->events[0] == NULL) {
+            condition->events[1] = NULL;
+            return 1;
+        }
+        condition->events[1] = CreateEvent(NULL, TRUE, FALSE, NULL);
+        if (condition->events[1] == NULL) {
+            CloseHandle(condition->events[0]);
+            condition->events[0] = NULL;
+            return 1;
+        }
+        return 0;
+    #endif
+}
+
+
+void condition_destroy(ThreadCondition *condition) {
+    #if defined(__OS_UNIX__)
+        pthread_cond_destroy(condition);
+    #elif defined(__OS_WINDOWS__)
+        if (condition->events[0] != NULL) CloseHandle(condition->events[0]);
+        if (condition->events[1] != NULL) CloseHandle(condition->events[1]);
+        DeleteCriticalSection(&condition->cs);
+    #endif
+}
+
+
+int condition_wait(ThreadCondition *condition, Mutex *mutex) {
+    #if defined(__OS_UNIX__)
+        return pthread_cond_wait(condition, mutex) == 0 ? 0 : 1;
+    #elif defined(__OS_WINDOWS__)
+        return _cnd_timedwait_win32(condition, mutex, INFINITE);
+    #endif
+}
+
+
+int condition_signal(ThreadCondition *condition) {
+    #if defined(__OS_UNIX__)
+        return pthread_cond_signal(condition) == 0 ? 0 : 1;
+    #elif defined(__OS_WINDOWS__)
+        EnterCriticalSection(&condition->cs);
+        int have_waiters = (condition->waiter_count > 0);
+        LeaveCriticalSection(&condition->cs);
+        if (have_waiters) if (SetEvent(condition->events[0]) == 0) return 1;
+        return 0;
+    #endif
+}
+
+
+int condition_broadcast(ThreadCondition *condition) {
+    #if defined(__OS_UNIX__)
+        return pthread_cond_broadcast(condition) == 0 ? 0 : 1;
+    #elif defined(__OS_WINDOWS__)
+        EnterCriticalSection(&condition->cs);
+        int have_waiters = (condition->waiter_count > 0);
+        LeaveCriticalSection(&condition->cs);
+        if (have_waiters) if (SetEvent(condition->events[1]) == 0) return 1;
         return 0;
     #endif
 }

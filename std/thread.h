@@ -28,6 +28,7 @@
 #if defined(__OS_UNIX__)
     typedef pthread_t Thread;
     typedef pthread_mutex_t Mutex;
+    typedef pthread_cond_t ThreadCondition;
 #elif defined(__OS_WINDOWS__)
     typedef HANDLE Thread;
     typedef struct {
@@ -35,6 +36,11 @@
         int status;
         int recursive;
     } Mutex;
+    typedef sturct {
+        HANDLE events[2];
+        unsigned int waiter_count;
+        CRITICAL_SECTION cs;
+    } ThreadCondition;
 #endif
 
 
@@ -124,6 +130,17 @@ int mutex_trylock(Mutex *mutex);
  * @return `0` for success.
 **/
 int mutex_unlock(Mutex *mutex);
+
+
+int condition_init(ThreadCondition *condition);
+
+void condition_destroy(ThreadCondition *condition);
+
+int condition_wait(ThreadCondition *condition, Mutex *mutex);
+
+int condition_signal(ThreadCondition *condition);
+
+int condition_broadcast(ThreadCondition *condition);
 
 
 #endif

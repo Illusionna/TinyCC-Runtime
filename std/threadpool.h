@@ -21,10 +21,12 @@ typedef struct {
     int n_workers;
     int queue_length;
     int max_queue_length;
+    int n_working;
     Thread *threads;
     Mutex queue_lock;
     ThreadCondition notify;     // Used to wake up the sleeping threads.
     ThreadCondition not_full;
+    ThreadCondition all_idle;   // The trigger condition is when the queue is empty and all threads are free.
     ThreadTask *queue_head;
     ThreadTask *queue_tail;
 } ThreadPool;
@@ -48,6 +50,14 @@ ThreadPool *threadpool_create(int n_workers, int max_queue_length);
  * @return `0` for success, `1` for failure, `2` for full queue.
 **/
 int threadpool_add(ThreadPool *pool, void (*func)(void *args), void *args, int block, void (*cleanup)(void *args));
+
+
+/**
+ * @brief Wait thread task in pool with blocking.
+ * @param pool The pointer of thread pool.
+ * @return `0` for success, `1` for failure.
+**/
+int threadpool_wait(ThreadPool *pool);
 
 
 /**

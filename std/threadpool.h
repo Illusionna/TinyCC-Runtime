@@ -8,37 +8,37 @@
 #include "thread.h"
 
 
-typedef struct ThreadTask {
+typedef struct {
 	void (*func)(void *args);
 	void *args;
     void (*cleanup)(void *args);
-    struct ThreadTask *next;
 } ThreadTask;
 
 
 typedef struct {
     int shutdown;   // `0` for running, `1` for shutdown.
     int n_workers;
-    int queue_length;
-    int max_queue_length;
     int n_working;
     Thread *threads;
-    Mutex queue_lock;
     ThreadCondition notify;     // Used to wake up the sleeping threads.
     ThreadCondition not_full;
     ThreadCondition all_idle;   // The trigger condition is when the queue is empty and all threads are free.
-    ThreadTask *queue_head;
-    ThreadTask *queue_tail;
+    Mutex queue_lock;
+    int queue_length;
+    int queue_capacity;
+    ThreadTask *queue;
+    int queue_head;
+    int queue_tail;
 } ThreadPool;
 
 
 /**
  * @brief Create a thread pool.
  * @param n_workers The number of threads.
- * @param max_queue_length The maximum length of thread queue.
+ * @param queue_capacity The maximum length of thread queue.
  * @return `NULL` for failure.
 **/
-ThreadPool *threadpool_create(int n_workers, int max_queue_length);
+ThreadPool *threadpool_create(int n_workers, int queue_capacity);
 
 
 /**

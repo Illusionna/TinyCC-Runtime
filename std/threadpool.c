@@ -11,6 +11,7 @@ ThreadPool *threadpool_create(int n_workers, int max_queue_length) {
     pool->max_queue_length = max_queue_length;
     pool->queue_length = 0;
     pool->shutdown = 0;
+    pool->n_working = 0;
     pool->queue_head = NULL;
     pool->queue_tail = NULL;
 
@@ -26,7 +27,15 @@ ThreadPool *threadpool_create(int n_workers, int max_queue_length) {
         return NULL;
     }
 
+    if (condition_init(&pool->all_idle) != 0) {
+        mutex_destroy(&pool->queue_lock);
+        free(pool->threads);
+        free(pool);
+        return NULL;
+    }
+
     if (condition_init(&pool->notify) != 0) {
+        condition_destroy(&pool->all_idle);
         mutex_destroy(&pool->queue_lock);
         free(pool->threads);
         free(pool);
@@ -35,6 +44,7 @@ ThreadPool *threadpool_create(int n_workers, int max_queue_length) {
 
     if (condition_init(&pool->not_full) != 0) {
         condition_destroy(&pool->notify);
+        condition_destroy(&pool->all_idle);
         mutex_destroy(&pool->queue_lock);
         free(pool->threads);
         free(pool);
@@ -51,6 +61,7 @@ ThreadPool *threadpool_create(int n_workers, int max_queue_length) {
 
             condition_destroy(&pool->not_full);
             condition_destroy(&pool->notify);
+            condition_destroy(&pool->all_idle);
             mutex_destroy(&pool->queue_lock);
             free(pool->threads);
             free(pool);
@@ -110,6 +121,16 @@ int threadpool_add(ThreadPool *pool, void (*func)(void *args), void *args, int b
 }
 
 
+int threadpool_wait(ThreadPool *pool) {
+    if (pool == NULL) return 1;
+
+    mutex_lock(&pool->queue_lock);
+    while ((pool->queue_length > 0 || pool->n_working > 0) && !pool->shutdown) condition_wait(&pool->all_idle, &pool->queue_lock);
+    mutex_unlock(&pool->queue_lock);
+    return 0;
+}
+
+
 int threadpool_destroy(ThreadPool *pool, int safe_exit) {
     if (pool == NULL) return 1;
 
@@ -149,9 +170,10 @@ int threadpool_destroy(ThreadPool *pool, int safe_exit) {
         task = next;
     }
 
-    mutex_destroy(&pool->queue_lock);
+    condition_destroy(&pool->all_idle);
     condition_destroy(&pool->notify);
     condition_destroy(&pool->not_full);
+    mutex_destroy(&pool->queue_lock);
     free(pool);
     return 0;
 }
@@ -175,6 +197,7 @@ int __threadpool_worker__(void *args) {
             pool->queue_head = task->next;
             pool->queue_length--;
             if (pool->queue_length == 0) pool->queue_tail = NULL;
+            pool->n_working++;
             condition_signal(&pool->not_full);
         }
 
@@ -184,6 +207,11 @@ int __threadpool_worker__(void *args) {
             if (task->func) (*(task->func))(task->args);
             if (task->cleanup) (*(task->cleanup))(task->args);
             free(task);
+
+            mutex_lock(&pool->queue_lock);
+            pool->n_working--;
+            if (pool->n_working == 0 && pool->queue_length == 0) condition_broadcast(&pool->all_idle);
+            mutex_unlock(&pool->queue_lock);
         }
     }
     return 0;

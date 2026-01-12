@@ -26,7 +26,7 @@ $(TARGET): $(compilation)
 	$(CC) $(compilation) -o $(TARGET) $(PARAMS) $(LIBRARY)
 
 $(compilation): %.o: %.c
-	$(CC) -c $< -o $@ -O2 -flto
+	$(CC) -c $< -o $@ $(PARAMS)
 
 clean:
 	$(REMOVE) $(compilation)

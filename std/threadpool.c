@@ -3,42 +3,34 @@
 
 ThreadPool *threadpool_create(int n_workers, int queue_capacity) {
     if (n_workers <= 0 || queue_capacity <= 0) return NULL;
-    ThreadPool *pool = (ThreadPool *)malloc(sizeof(ThreadPool));
-    if (pool == NULL) return NULL;
-    memset(pool, 0, sizeof(ThreadPool));
 
-    pool->queue = (ThreadTask *)malloc(queue_capacity * sizeof(ThreadTask));
-    if (pool->queue == NULL) {
-        free(pool);
-        return NULL;
-    }
+    unsigned int pool_size = sizeof(ThreadPool);
+    unsigned int queue_size = queue_capacity * sizeof(ThreadTask);
+    unsigned int thread_size = n_workers * sizeof(Thread);
+
+    unsigned int queue_offset = (pool_size + 7) & ~7;
+    unsigned int thread_offset = (queue_offset + queue_size + 7) & ~7;
+
+    unsigned int total_size = thread_offset + thread_size;
+
+    void *sequence = malloc(total_size);
+    if (!sequence) return NULL;
+    memset(sequence, 0, total_size);
+
+    ThreadPool *pool = (ThreadPool *)sequence;
+    pool->queue = (ThreadTask *)((char *)sequence + queue_offset);
+    pool->threads = (Thread *)((char *)sequence + thread_offset);
 
     pool->n_workers = n_workers;
-    pool->shutdown = 0;
-    pool->n_working = 0;
     pool->queue_capacity = queue_capacity;
-    pool->queue_length = 0;
-    pool->queue_head = 0;
-    pool->queue_tail = 0;
-
-    pool->threads = (Thread *)malloc(n_workers * sizeof(Thread));
-    if (pool->threads == NULL) {
-        free(pool->queue);
-        free(pool);
-        return NULL;
-    }
 
     if (mutex_create(&pool->queue_lock, 1) != 0) {
-        free(pool->threads);
-        free(pool->queue);
         free(pool);
         return NULL;
     }
 
     if (condition_init(&pool->all_idle) != 0) {
         mutex_destroy(&pool->queue_lock);
-        free(pool->threads);
-        free(pool->queue);
         free(pool);
         return NULL;
     }
@@ -46,8 +38,6 @@ ThreadPool *threadpool_create(int n_workers, int queue_capacity) {
     if (condition_init(&pool->notify) != 0) {
         condition_destroy(&pool->all_idle);
         mutex_destroy(&pool->queue_lock);
-        free(pool->threads);
-        free(pool->queue);
         free(pool);
         return NULL;
     }
@@ -56,17 +46,17 @@ ThreadPool *threadpool_create(int n_workers, int queue_capacity) {
         condition_destroy(&pool->notify);
         condition_destroy(&pool->all_idle);
         mutex_destroy(&pool->queue_lock);
-        free(pool->threads);
-        free(pool->queue);
         free(pool);
         return NULL;
     }
 
     for (int i = 0; i < n_workers; i++) {
         if (thread_create(&(pool->threads[i]), __threadpool_worker__, (void *)pool) != 0) {
-            pool->n_workers = i;
+            mutex_lock(&pool->queue_lock);
             pool->shutdown = 1;
+            pool->n_workers = i;
             condition_broadcast(&pool->notify);
+            mutex_unlock(&pool->queue_lock);
 
             for (int j = 0; j < i; j++) thread_join(&(pool->threads[j]), NULL);
 
@@ -74,8 +64,6 @@ ThreadPool *threadpool_create(int n_workers, int queue_capacity) {
             condition_destroy(&pool->notify);
             condition_destroy(&pool->all_idle);
             mutex_destroy(&pool->queue_lock);
-            free(pool->threads);
-            free(pool->queue);
             free(pool);
             return NULL;
         }
@@ -152,9 +140,7 @@ int threadpool_destroy(ThreadPool *pool, int safe_exit) {
     mutex_unlock(&pool->queue_lock);
 
     for (int i = 0; i < pool->n_workers; i++) thread_join(&(pool->threads[i]), NULL);
-    free(pool->threads);
 
-    if (pool->queue) free(pool->queue);
     condition_destroy(&pool->all_idle);
     condition_destroy(&pool->notify);
     condition_destroy(&pool->not_full);

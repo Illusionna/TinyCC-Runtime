@@ -1,6 +1,9 @@
 #include "os.h"
 
 
+static unsigned long long OS_SEED = 1;
+
+
 int os_getpid() {
     #if defined(__OS_WINDOWS__)
         return (int)GetCurrentProcessId();
@@ -174,4 +177,16 @@ void os_getexec(char *buffer, int size) {
 
     if (last_slash != NULL) *last_slash = '\0';
     else fprintf(stderr, "Warning: No path separator found.\n");
+}
+
+
+void os_srand() {
+    unsigned int i = (unsigned int)time(NULL);
+    OS_SEED = (((long long int)i) << 16) | rand();
+}
+
+
+double os_random(double low, double high) {
+    OS_SEED = (0x5DEECE66DLL * OS_SEED + 0xB16) & 0xFFFFFFFFFFFFLL;
+    return low + (high - low) * ((double)(OS_SEED >> 16) / (double)0x100000000LL);
 }

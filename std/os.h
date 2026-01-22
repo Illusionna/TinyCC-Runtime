@@ -111,4 +111,19 @@ char *os_getpwd(char *buffer, int size);
 void os_getexec(char *buffer, int size);
 
 
+/**
+ * @brief Initialize the seed for the rand function.
+**/
+void os_srand();
+
+
+/**
+ * @brief Generate a random value in zone `[low, high]`.
+ * @param low The low value of zone.
+ * @param high The high value of zone.
+ * @return The random value.
+**/
+double os_random(double low, double high);
+
+
 #endif

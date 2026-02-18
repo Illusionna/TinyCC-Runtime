@@ -39,6 +39,61 @@ return res;
 
 ## 新特性
 
+- 2026-02-18: 集合 `set.h` 头文件.
+```c
+#include "set.h"
+
+int main(int argc, char *argv[], char *envs[]) {
+    Set* set = set_create();
+    
+    set_add(set, 1);
+    set_add(set, 3.1415926);
+    set_add(set, "Hello World!");
+    set_view(set);
+
+    printf("%s\n",  set_contains(set, 2.718281828) ? "existence" : "nonexistence");
+    printf("%s\n",  set_contains(set, "Hello World!") ? "existence" : "nonexistence");
+
+    set_remove(set, 1);
+    set_view(set);
+
+    set_destroy(set);
+    return 0;
+}
+```
+
+- 2026-01-12: 队列线程池 `threadpool.h` 头文件（依赖 `thread.h` 库）
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include "threadpool.h"
+
+void task_function(void *args) {
+    int id = *(int *)args;
+    printf("task [%d] is running.\n", id);
+    sleep(1);
+    printf("task [%d] finished.\n", id);
+}
+
+void cleanup_function(void *args) {
+    free(args);
+}
+
+int main(int argc, char *argv[], char *envs[]) {
+    ThreadPool *pool = threadpool_create(4, 16);
+    for (int i = 0; i < 10; i++) {
+        int *arg = (int *)malloc(sizeof(int));
+        *arg = i;
+        threadpool_add(pool, task_function, arg, 1, cleanup_function);
+    }
+    threadpool_wait(pool);
+    threadpool_destroy(pool, 1);
+    return 0;
+}
+```
+
 - 2025-11-22: 多线程 `log.h` 头文件.
 ```c
 #include <stdio.h>

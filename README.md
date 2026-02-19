@@ -39,6 +39,28 @@ return res;
 
 ## 新特性
 
+- 2026-02-19: 异步日志 `async_log.h` 头文件（依赖 `threadpool.h` 库）
+```c
+#include "async_log.h"
+
+int main(int argc, char *argv[], char *envs[]) {
+    async_log_init(4, 32);
+    // async_log_setting(1);
+    FILE *f = fopen("app.log", "a");
+    async_log_config_write(f);
+    for (int i = 0; i < 10; i++) {
+        asynclog_trace("This is an async log message index: %d", i);
+        asynclog_debug("This is an async log message index: %d", i);
+        asynclog_info("This is an async log message index: %d", i);
+        asynclog_warning("This is an async log message index: %d", i);
+        asynclog_error("This is an async log message index: %d", i);
+        asynclog_fatal("This is an async log message index: %d", i);
+    }
+    async_log_exit(1);
+    return 0;
+}
+```
+
 - 2026-02-18: 集合 `set.h` 头文件.
 ```c
 #include "set.h"
@@ -94,7 +116,7 @@ int main(int argc, char *argv[], char *envs[]) {
 }
 ```
 
-- 2025-11-22: 多线程 `log.h` 头文件.
+- 2025-11-22: 同步日志库 `log.h` 头文件.
 ```c
 #include <stdio.h>
 #include "log.h"
@@ -114,7 +136,7 @@ int main(int argc, char *argv[], char *env[]) {
 }
 ```
 
-- 2025-11-22: 多线程 `os.h` 头文件.
+- 2025-11-22: 操作系统 `os.h` 头文件.
 ```c
 #include <stdlib.h>
 #include "os.h"
@@ -128,7 +150,7 @@ int main(int argc, char *argv[], char *env[]) {
 }
 ```
 
-- 2025-11-22: 多线程 `socket.h` 头文件.
+- 2025-11-22: 网络套接字 `socket.h` 头文件.
 ```c
 #include <stdio.h>
 #include "socket.h"

@@ -57,6 +57,7 @@ int main(int argc, char *argv[], char *envs[]) {
         asynclog_fatal("This is an async log message index: %d", i);
     }
     async_log_exit(1);
+    fclose(f);
     return 0;
 }
 ```

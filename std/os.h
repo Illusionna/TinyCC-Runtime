@@ -31,6 +31,13 @@
 #include <string.h>
 
 
+#if defined(__OS_UNIX__)
+    #define os_fseek fseeko
+#elif defined(__OS_WINDOWS__)
+    #define os_fseek _fseeki64
+#endif
+
+
 /**
  * @brief Get process ID.
  * @return PID.
@@ -124,6 +131,14 @@ void os_srand();
  * @return The random value.
 **/
 double os_random(double low, double high);
+
+
+/**
+ * @brief Get the size of file.
+ * @param filepath The path of file.
+ * @return The size of file (`0` for empty).
+**/
+unsigned long long os_filesize(char *filepath);
 
 
 #endif

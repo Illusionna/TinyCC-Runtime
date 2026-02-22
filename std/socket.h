@@ -17,6 +17,7 @@
     #include <winsock2.h>
     #include <ws2tcpip.h>
 #elif defined(__OS_UNIX__)
+    #include <netinet/tcp.h>
     #include <sys/socket.h>
     #include <netinet/in.h>
     #include <arpa/inet.h>
@@ -34,6 +35,22 @@
     typedef int Socket;
     #define SOCKET_INVALID -1
 #endif
+
+
+/**
+ * @brief Network to host long long.
+ * @param x network.
+ * @return host.
+**/
+#define socket_ntohll(x) ((ntohl(1) == 1) ? (x) : (((unsigned long long)ntohl((x) & 0xffffffffUL)) << 32 | ntohl((unsigned int)((x) >> 32))))
+
+
+/**
+ * @brief Host to network long long.
+ * @param x host.
+ * @return network.
+**/
+#define socket_htonll(x) ((htonl(1) == 1) ? (x) : (((unsigned long long)htonl((x) & 0xffffffffUL)) << 32 | htonl((unsigned int)((x) >> 32))))
 
 
 /**

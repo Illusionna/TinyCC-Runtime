@@ -190,3 +190,16 @@ double os_random(double low, double high) {
     OS_SEED = (0x5DEECE66DLL * OS_SEED + 0xB16) & 0xFFFFFFFFFFFFLL;
     return low + (high - low) * ((double)(OS_SEED >> 16) / (double)0x100000000LL);
 }
+
+
+unsigned long long os_filesize(char *filepath) {
+    #if defined(__OS_UNIX__)
+        struct stat file;
+        if (stat(filepath, &file) == -1) return 0;
+        return (long long)file.st_size;
+    #elif defined(__OS_WINDOWS__)
+        struct _stat file;
+        if (_stat(filename, &file) == -1) return 0;
+        return (long long)file.st_size;
+    #endif
+}

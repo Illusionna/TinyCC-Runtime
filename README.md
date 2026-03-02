@@ -39,6 +39,42 @@ return res;
 
 ## 新特性
 
+- 2026-03-02: 数据类型 `type.h` 头文件.
+```c
+#include <stdio.h>
+#include "type.h"
+
+typedef struct Hardware {
+    int id;
+    float voltage;
+} Hardware;
+
+typedef struct Robot {
+    char name[32];
+    int version;
+    struct Hardware hardware;
+} Robot;
+
+void func(int *object) {
+    Robot *robot = type_container_of(object, Robot, version);
+    printf("version = %d\n", *(int *)((char *)robot + 32));
+    printf("---- Hardware Pointer --> Robot ----\n");
+    printf("Robot Name: %s\n", robot->name);
+    printf("Robot Version: %d\n", robot->version);
+    printf("Robot ID: %d\n", robot->hardware.id);
+    printf("Robot Voltage: %f\n", robot->hardware.voltage);
+}
+
+int main() {
+    Robot robot = {.name = "Optimus-Prime", .version = 2026, .hardware = {.id = 19520302, .voltage = 220.7}};
+    printf("Structure's Initial Address:\t%p\n", (void *)&robot);
+    printf("Hardware Member Address:\t%p\n", (void *)&robot.hardware);
+    printf("Offset = %td\n", (char *)&robot.hardware - (char *)&robot);
+    func(&robot.version);
+    return 0;
+}
+```
+
 - 2026-02-19: 异步日志 `async_log.h` 头文件（依赖 `threadpool.h` 库）
 ```c
 #include "async_log.h"

@@ -46,13 +46,16 @@
 #endif
 
 
+#define True 1
+#define False 0
+
+
+typedef int bool;
 typedef size_t usize;
 typedef ptrdiff_t isize;
 typedef uint8_t byte;
 typedef uintptr_t uintptr;
 typedef intptr_t intptr;
-
-
 typedef int8_t int8;
 typedef int16_t int16;
 typedef int32_t int32;

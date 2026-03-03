@@ -47,6 +47,32 @@ void __hashmap_expand__(HashMap *dict) {
 }
 
 
+void __hashmap_shrink__(HashMap *dict) {
+    int MIN_BUCKETS = 8;
+    if (dict->bucket <= MIN_BUCKETS) return;
+
+    int old_buckets = dict->bucket;
+    Node **old_table = dict->table;
+
+    dict->bucket = dict->bucket / 2;
+    dict->count = 0;
+    dict->table = (Node **)calloc(dict->bucket, sizeof(Node *));
+
+    for (int i = 0; i < old_buckets; i++) {
+        Node *node = old_table[i];
+        while (node) {
+            Node *next = node->next;
+            unsigned int hash = __hash_function_ELF__(node->key, dict->bucket);
+            node->next = dict->table[hash];
+            dict->table[hash] = node;
+            dict->count++;
+            node = next;
+        }
+    }
+    free(old_table);
+}
+
+
 void hashmap_put(HashMap *dict, char *key, char *value) {
     // Expand the HashMap in order to avoid too many collisions.
     double LOAD_FACTOR = 0.75;
@@ -102,6 +128,10 @@ int hashmap_remove(HashMap *dict, char *key) {
             free(node->value);
             free(node);
             dict->count--;
+
+            double SHRINK_FACTOR = 0.25;
+            if (dict->bucket > 8 && dict->count <= dict->bucket * SHRINK_FACTOR) __hashmap_shrink__(dict);
+
             return 0;
         }
         prev = node;

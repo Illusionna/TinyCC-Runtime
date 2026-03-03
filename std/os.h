@@ -32,10 +32,12 @@
 
 
 #if defined(__OS_UNIX__)
+    #define os_ftell ftello
     #define os_fseek fseeko
     #define os_flockfile flockfile
     #define os_funlockfile funlockfile
 #elif defined(__OS_WINDOWS__)
+    #define os_ftell _ftelli64
     #define os_fseek _fseeki64
     #define os_flockfile _lock_file
     #define os_funlockfile _unlock_file

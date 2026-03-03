@@ -38,6 +38,13 @@ void __hashmap_expand__(HashMap *dict);
 
 
 /**
+ * @brief Shrink the HashMap when the load factor is below 25%.
+ * @param dict The HashMap dictionary.
+**/
+void __hashmap_shrink__(HashMap *dict);
+
+
+/**
  * @brief Create a new HashMap dictionary.
  * @return The pointer to the new HashMap dictionary.
 **/

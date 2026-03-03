@@ -203,3 +203,42 @@ unsigned long long os_filesize(char *filepath) {
         return (long long)file.st_size;
     #endif
 }
+
+
+MapFile *os_mmap(char *filepath, usize length) {
+    MapFile *f = malloc(sizeof(MapFile));
+    f->size = length;
+    #if defined(__OS_UNIX__)
+        f->fd = open(filepath, O_RDONLY);
+        if (f->fd == -1) return NULL;
+        f->data = mmap(NULL, length, PROT_READ, MAP_PRIVATE, f->fd, 0);
+        if (f->data == MAP_FAILED) {
+            close(f->fd);
+            return NULL;
+        }
+    #elif defined(__OS_WINDOWS__)
+        f->hFile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (f->hFile == INVALID_HANDLE_VALUE) return NULL;
+        f->hMapping = CreateFileMapping(f->hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+        if (f->hMapping == NULL) {
+            CloseHandle(f->hFile);
+            return NULL;
+        }
+        f->data = MapViewOfFile(f->hMapping, FILE_MAP_READ, 0, 0, length);
+    #endif
+    return f;
+}
+
+
+void os_munmap(MapFile *f) {
+    if (!f) return;
+    #if defined(__OS_UNIX__)
+        munmap(f->data, f->size);
+        close(f->fd);
+    #elif defined(__OS_WINDOWS__)
+        UnmapViewOfFile(f->data);
+        CloseHandle(f->hMapping);
+        CloseHandle(f->hFile);
+    #endif
+    free(f);
+}

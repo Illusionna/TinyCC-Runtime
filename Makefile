@@ -53,20 +53,20 @@ endif
 compilation = $(SRC:.c=.o)
 
 $(TARGET): $(compilation)
-	$(CC) $(compilation) -o $(TARGET) $(PARAMS) $(LIBRARY)
+	$(CC) -Wall -Wextra $(compilation) -o $(TARGET) $(PARAMS) $(LIBRARY)
 
 $(compilation): %.o: %.c
-	$(CC) -c $< -o $@ $(PARAMS) -fPIC
+	$(CC) -Wall -Wextra -c $< -o $@ $(PARAMS) -fPIC
 
 shared: $(SHARED)
 $(SHARED): $(compilation)
 ifeq ($(OS), Windows_NT)
-	$(CC) -shared $(compilation) -o $(SHARED) $(PARAMS) $(LIBRARY)
+	$(CC) -Wall -Wextra -shared $(compilation) -o $(SHARED) $(PARAMS) $(LIBRARY)
 else
     ifeq ($(shell uname), Darwin)
-	$(CC) -shared $(compilation) -o $(SHARED) $(PARAMS) $(LIBRARY) -Wl,-install_name,$(PREFIX)/lib/$(SHARED)
+	$(CC) -Wall -Wextra -shared $(compilation) -o $(SHARED) $(PARAMS) $(LIBRARY) -Wl,-install_name,$(PREFIX)/lib/$(SHARED)
     else
-	$(CC) -shared $(compilation) -o $(SHARED) $(PARAMS) $(LIBRARY)
+	$(CC) -Wall -Wextra -shared $(compilation) -o $(SHARED) $(PARAMS) $(LIBRARY)
     endif
 endif
 

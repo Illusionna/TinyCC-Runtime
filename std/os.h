@@ -18,8 +18,10 @@
     #include <direct.h>
     #include <windows.h>
 #elif defined(__OS_UNIX__)
+    #include <fcntl.h>
     #include <unistd.h>
     #include <limits.h>
+    #include <sys/mman.h>
 #endif
 
 
@@ -29,6 +31,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+
+
+#include "type.h"
 
 
 #if defined(__OS_UNIX__)
@@ -41,6 +46,23 @@
     #define os_fseek _fseeki64
     #define os_flockfile _lock_file
     #define os_funlockfile _unlock_file
+#endif
+
+
+
+#if defined(__OS_UNIX__)
+    typedef struct {
+        void *data;
+        usize size;
+        int fd;
+    } MapFile;
+#elif defined(__OS_WINDOWS__)
+    typedef struct {
+        void *data;
+        size_t size;
+        HANDLE hFile;
+        HANDLE hMapping;
+    } MapFile;
 #endif
 
 
@@ -145,6 +167,32 @@ double os_random(double low, double high);
  * @return The size of file (`0` for empty).
 **/
 unsigned long long os_filesize(char *filepath);
+
+
+/**
+ * @brief Map a file into the process's virtual address space.
+ * @param filepath The path of the file to be mapped.
+ * @param length The number of bytes to map from the beginning of the file (`usize` is `size_t`).
+ * @return A pointer to a `MapFile` structure containing the memory address (`NULL` for failure).
+ * @example
+ * @code
+MapFile *f = os_mmap("demo.txt", 12);
+if (f && f->data) {
+    printf("%c\n", ((char *)f->data)[7]);
+    os_munmap(f);
+} else {
+    printf("Failure!\n");
+}
+ * @endcode
+**/
+MapFile *os_mmap(char *filepath, usize length);
+
+
+/**
+ * @brief Unmap a previously mapped file and release associated system resources.
+ * @param f The pointer to the `MapFile` structure to be released.
+**/
+void os_munmap(MapFile *f);
 
 
 #endif

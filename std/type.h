@@ -48,9 +48,9 @@
 
 #define True 1
 #define False 0
+#define bool int
 
 
-typedef int bool;
 typedef size_t usize;
 typedef ptrdiff_t isize;
 typedef uint8_t byte;
